@@ -3,6 +3,7 @@ package com.example.restapp.controller;
 
 import com.example.restapp.model.Book;
 import com.example.restapp.repository.BookRepository;
+import com.example.restapp.service.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -18,23 +19,22 @@ import java.util.Optional;
 public class BookController {
 
     @Autowired
-    private BookRepository bookRepository;
+    private BookService bookService;
 
 
     @GetMapping("/getAll")
     public ResponseEntity<List<Book>> getAllBooks(){
         List<Book> bookList = new ArrayList<>();
+
         try {
 
 
 
-            bookRepository.findAll().forEach(bookList::add);
+            bookList = bookService.getAllBooks();
 
             if(bookList.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
-
-
 
         } catch(Exception exception){
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -47,18 +47,17 @@ public class BookController {
     @GetMapping("/getBookById/{id}")
     public ResponseEntity<Book> getBookById(@PathVariable Long id){
 
-        Optional<Book> bookData = bookRepository.findById(id);
+        Book bookData = bookService.getBookById(id);
 
-        if(bookData.isPresent()){
-            return new ResponseEntity<>(bookData.get(), HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        return new ResponseEntity<>(bookData, HttpStatus.OK);
+
     }
 
     @PostMapping("/addBook")
     public ResponseEntity<Book> addBook(@RequestBody Book book){
 
-        Book bookObject = bookRepository.save(book);
+        Book bookObject = bookService.addBook(book);
 
         return new ResponseEntity<>(bookObject, HttpStatus.OK);
 
@@ -69,16 +68,12 @@ public class BookController {
     @PostMapping("/updateById/{id}")
     public ResponseEntity<Book> updateBookById(@PathVariable Long id, @RequestBody Book updatedbook){
 
-        Optional<Book> oldBook = bookRepository.findById(id);
+        Book book = bookService.updateBookById(id, updatedbook);
 
-        if(oldBook.isPresent()){
-            Book updatedBookData = oldBook.get();
-            updatedBookData.setAuthor(updatedbook.getAuthor());
-            updatedBookData.setTitle(updatedbook.getTitle());
+        if(book != null){
 
-            Book bookObject = bookRepository.save(updatedBookData);
 
-            return new ResponseEntity<>(bookObject, HttpStatus.OK);
+            return new ResponseEntity<>(book, HttpStatus.OK);
 
         }
 
@@ -92,12 +87,12 @@ public class BookController {
     public ResponseEntity<HttpStatus> deleteBookById(@PathVariable Long id){
 
 
-        try {
-            bookRepository.deleteById(id);
+        if(bookService.deleteBookById(id))
+        {
             return new ResponseEntity<>(HttpStatus.OK);
-        } catch(Exception exception){
-            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+
         }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
 
     }
