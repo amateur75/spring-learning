@@ -11,9 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 public class BookController {
@@ -23,76 +21,128 @@ public class BookController {
 
 
     @GetMapping("/getAll")
-    public ResponseEntity<List<Book>> getAllBooks(){
-        List<Book> bookList = new ArrayList<>();
+    public ResponseEntity<?> getAllBooks(){
 
-        try {
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
 
+        List<Book> bookList = bookService.getAllBooks();
 
+        if(!bookList.isEmpty()){
+            response.put("status", 1);
+            response.put("data", bookList);
 
-            bookList = bookService.getAllBooks();
-
-            if(bookList.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            }
-
-        } catch(Exception exception){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+        else{
+            response.clear();
+            response.put("status", 0);
+            response.put("data", "Data is Not Found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(bookList, HttpStatus.OK);
 
     }
 
     @GetMapping("/getBookById/{id}")
-    public ResponseEntity<Book> getBookById(@PathVariable Long id){
-
-        Book bookData = bookService.getBookById(id);
+    public ResponseEntity<?> getBookById(@PathVariable Long id){
 
 
-        return new ResponseEntity<>(bookData, HttpStatus.OK);
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+
+        Book book = bookService.getBookById(id);
+
+        if(book == null){
+
+            response.put("status", 0);
+            response.put("data", "Data is Not Found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
+        }
+        else{
+
+            response.put("status", 1);
+            response.put("data", book);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        }
 
     }
 
     @PostMapping("/addBook")
-    public ResponseEntity<Book> addBook(@RequestBody Book book){
+    public ResponseEntity<?> addBook(@RequestBody Book book){
 
-        Book bookObject = bookService.addBook(book);
 
-        return new ResponseEntity<>(bookObject, HttpStatus.OK);
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+
+        bookService.addBook(book);
+
+        response.put("status", 1);
+        response.put("data", "Data saved successfully.");
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
 
 
 
     }
 
     @PostMapping("/updateById/{id}")
-    public ResponseEntity<Book> updateBookById(@PathVariable Long id, @RequestBody Book updatedbook){
+    public ResponseEntity<?> updateBookById(@PathVariable Long id, @RequestBody Book updatedbook){
 
-        Book book = bookService.updateBookById(id, updatedbook);
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
 
-        if(book != null){
+        Book book = bookService.getBookById(id);
 
+        if(book == null){
 
-            return new ResponseEntity<>(book, HttpStatus.OK);
+            response.put("status", 0);
+            response.put("data", "Data is Not Found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 
         }
+        else{
 
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            book.setTitle(updatedbook.getTitle());
+            book.setAuthor(updatedbook.getAuthor());
+
+            bookService.addBook(book);
+
+            response.put("status", 1);
+            response.put("data", "Data updated successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        }
 
 
 
     }
 
     @DeleteMapping("/deletedById/{id}")
-    public ResponseEntity<HttpStatus> deleteBookById(@PathVariable Long id){
+    public ResponseEntity<?> deleteBookById(@PathVariable Long id){
 
 
-        if(bookService.deleteBookById(id))
-        {
-            return new ResponseEntity<>(HttpStatus.OK);
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+
+        Book book = bookService.getBookById(id);
+
+        if(book == null){
+
+            response.put("status", 0);
+            response.put("data", "Data is Not Found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        else{
+
+
+            bookService.deleteBookById(id);
+
+            response.put("status", 1);
+            response.put("data", "Data updated successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        }
+
+
 
 
     }

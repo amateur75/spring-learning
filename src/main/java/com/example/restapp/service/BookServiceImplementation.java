@@ -1,5 +1,6 @@
 package com.example.restapp.service;
 
+import com.example.restapp.exception.NoBookFoundException;
 import com.example.restapp.model.Book;
 import com.example.restapp.repository.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,19 @@ public class BookServiceImplementation implements BookService{
 
     @Override
     public Book getBookById(Long id) {
-        return bookRepository.findById(id).orElseThrow();
+
+        Optional <Book> bookInfo = bookRepository.findById(id);
+
+        Book book = null;
+
+        if(bookInfo.isPresent()){
+            book = bookInfo.get();
+        }
+        else {
+            throw new NoBookFoundException("No Book has been found");
+        }
+
+        return book;
     }
 
     @Override
@@ -42,35 +55,15 @@ public class BookServiceImplementation implements BookService{
 
     }
 
+
     @Override
-    public Book updateBookById(Long id, Book updateBook) {
-        Optional<Book> oldBook = bookRepository.findById(id);
+    public void Update(Book book){
 
-        if(oldBook.isPresent()){
-            Book updatedBookData = oldBook.get();
-            updatedBookData.setAuthor(updateBook.getAuthor());
-            updatedBookData.setTitle(updateBook.getTitle());
-
-            Book bookObject = bookRepository.save(updatedBookData);
-
-            return bookObject;
-
-        }
-
-        return null;
     }
 
+
     @Override
-    public boolean deleteBookById(Long id) {
-
-        Optional<Book> book = bookRepository.findById(id);
-
-        if(book.isPresent()){
-            bookRepository.deleteById(id);
-            return true;
-        }
-
-        return false;
-
+    public void deleteBookById(Long id) {
+        bookRepository.deleteById(id);
     }
 }
